@@ -17,12 +17,22 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
 public class ShowColors2JFrame extends JFrame{
-    //==================================================================upper====================================================================================================
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	//==================================================================upper====================================================================================================
     private JPanel upperPanel;
     private JCheckBox boldButton, italicButton;
     private Font font = new Font("Serif", Font.PLAIN, 14);
@@ -30,18 +40,20 @@ public class ShowColors2JFrame extends JFrame{
     private static final Color[] colors = {Color.BLACK, Color.BLUE, Color.CYAN, Color.DARK_GRAY, Color.GRAY, Color.GREEN, Color.LIGHT_GRAY, Color.MAGENTA, Color.ORANGE, Color.PINK, Color.RED, Color.WHITE, Color.YELLOW};
     private JComboBox<String> lista_culori;
     private JButton new_window;
-    //==================================================================center================================================================================================
+    //==================================================================center==================================================================================================
     private JScrollPane scrollablePane;
     private JTextArea textarea;
     private ScrollPaneLayout centrez;
-    //===================================================================lower================================================================================================
+    //===================================================================lower==================================================================================================
     private JButton changeColorJButton, saveJButton, filePickerJButton;
     private JPanel lowerPanel;
     private JFileChooser fileChooser;
-    //===================================================================generic=================================================================================================
+    //===================================================================generic================================================================================================
     private Color color = Color.LIGHT_GRAY;
+    //==================================================================database================================================================================================
+    private String db_name="root", db_password="nick7777777", database_connection="jdbc:mysql://127.0.0.1:3306/envy_database";
+	private static String db_table="envy_table";
     
-
     public ShowColors2JFrame(){
 //precalculated operations
         super("ENvy: The Text Editor");
@@ -116,6 +128,8 @@ public class ShowColors2JFrame extends JFrame{
                         color = JColorChooser.showDialog(ShowColors2JFrame.this, "Pick a color", color);
                         if( color == null ) color = Color.LIGHT_GRAY;
                         textarea.setBackground( color );
+                        //String opt = "backgroundColour";
+                        //databaseQuery(opt, color);
                     }catch(Exception exc){
                         System.err.println(exc.getMessage());
                     }
@@ -180,12 +194,21 @@ public class ShowColors2JFrame extends JFrame{
         public void itemStateChanged(ItemEvent e)
         {
             try{
-            if(boldButton.isSelected() && italicButton.isSelected()) font = new Font(font.getFamily(), Font.BOLD + Font.ITALIC, font.getSize());
-            else if(boldButton.isSelected()) font = new Font(font.getFamily(), Font.BOLD, font.getSize());
-            else if(italicButton.isSelected()) font = new Font(font.getFamily(), Font.ITALIC, font.getSize());
-            else font = new Font(font.getFamily(), Font.PLAIN, font.getSize());
+	            if(boldButton.isSelected() && italicButton.isSelected()) font = new Font(font.getFamily(), Font.BOLD + Font.ITALIC, font.getSize());
+	            else if(boldButton.isSelected()) font = new Font(font.getFamily(), Font.BOLD, font.getSize());
+	            else if(italicButton.isSelected()) font = new Font(font.getFamily(), Font.ITALIC, font.getSize());
+	            else font = new Font(font.getFamily(), Font.PLAIN, font.getSize());
 
-            textarea.setFont(font);
+	            
+            	if(boldButton.isSelected()) {
+                	databaseQuery("bold", true);
+                	System.out.println("db");
+            	}
+            	if(italicButton.isSelected()) {
+            		databaseQuery("italic", true);
+            		System.out.println("db");
+            	}
+	            textarea.setFont(font);
             }catch(Exception exc){
                 System.err.println(exc.getMessage());
             }
@@ -193,10 +216,6 @@ public class ShowColors2JFrame extends JFrame{
     }
 
 //methods--------------------------------------------------------------------------------------------------------------------------------------------
-    protected void CloseAction(){
-        System.out.println("am oprit un thread!");
-        multithreading.active--;
-    }
     //the method for the file chooser of "save" which returns the file within the textarea's content is saved
     private File getFile(){ // ~~~
         JFileChooser fileChooser = new JFileChooser();
@@ -211,4 +230,16 @@ public class ShowColors2JFrame extends JFrame{
         }
         return fileName;
     }// ~~~
+    public static void databaseQuery(String optiune, boolean val) {
+    	try {
+    		Connection con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/envy_database", "root", "nick7777777");//Establishing connection
+    		String query = "INSERT INTO " + db_table+"(optiune) VALUES(\"" + optiune + "\")";
+    		PreparedStatement st = con.prepareStatement(query);
+    		st.executeUpdate();
+    		con.close();
+    		
+    	}catch(SQLException e) {
+    		System.out.println(e.getMessage());
+    	}
+    }
 }

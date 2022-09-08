@@ -1,5 +1,5 @@
 
-//import javax.swing.JFrame;
+import javax.swing.JFrame;
 public class fir_exec extends Thread{
     public fir_exec(ThreadGroup thGr, String name){
         super(thGr, name);
@@ -9,7 +9,7 @@ public class fir_exec extends Thread{
     }
     public void run(){
         ShowColors2JFrame fereastra = new ShowColors2JFrame();
-        //fereastra.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        fereastra.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         fereastra.setSize(1400, 700);
         fereastra.setVisible(true);
     }
