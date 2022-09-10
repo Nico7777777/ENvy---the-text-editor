@@ -1,10 +1,13 @@
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.ItemListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
 import java.awt.event.ItemEvent;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Font;
+import java.awt.Font; /// abstract windows toolkit
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.ScrollPaneLayout;
 import javax.swing.JColorChooser;
 import javax.swing.JFileChooser;
@@ -13,21 +16,25 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.UIManager;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.swing.JLabel;
+import javax.swing.JPanel;/// the modern pack 'swing'
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;/// mysql database
+import java.io.FileNotFoundException;
 import java.io.BufferedReader;
-import java.io.File;
+import java.io.PrintWriter;
 import java.io.FileReader;
+import java.io.File;/// input-output
 
-public class ShowColors2JFrame extends JFrame{
+public class ENvy extends JFrame /*implements ActionListener*/{
     /**
 	 * 
 	 */
@@ -51,17 +58,26 @@ public class ShowColors2JFrame extends JFrame{
     //===================================================================generic================================================================================================
     private Color color = Color.LIGHT_GRAY;
     //==================================================================database================================================================================================
-    private String db_name="root", db_password="nick7777777", database_connection="jdbc:mysql://127.0.0.1:3306/envy_database";
-	private static String db_table="envy_table";
+    private static String db_name="root", db_password="nick7777777", db_connection="jdbc:mysql://127.0.0.1:3306/envy_database", db_table="envy_table";
     
-    public ShowColors2JFrame(){
+    public ENvy(){
 //precalculated operations
         super("ENvy: The Text Editor");
         //=================================================================generic operations=================================================================================
         CheckBoxHandler handler = new CheckBoxHandler();
         lista_culori = new JComboBox<String>(color_names);
         lista_culori.setMaximumRowCount(5);
-        
+        try {
+        	UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+        } catch(UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
         //==================================================================upper operations=================================================================================
         upperPanel = new JPanel();
         //bold button stuff
@@ -103,7 +119,7 @@ public class ShowColors2JFrame extends JFrame{
         add(lowerPanel, BorderLayout.SOUTH);
         
 //anonymous listeners---------------------------------------------------------------------------------------------------------------------------------------------------------------
-        new_window.addActionListener(
+        new_window.addActionListener(/// ~~~
             new ActionListener()
             {
                 public void actionPerformed(ActionEvent e)
@@ -113,11 +129,14 @@ public class ShowColors2JFrame extends JFrame{
                         Thread new_th = new Thread(fir);
                         new_th.start();
                     }catch(Exception exc){
-                        System.err.println(exc.getMessage());
+                    	JDialog show = new JDialog();
+                    	JLabel lab = new JLabel("Error!");
+                    	show.add(lab);
+                    	show.setSize(200, 100);
+                    	show.setVisible(true);
                     }
                 }
-            }
-        );
+        });/// ~~~
 
         changeColorJButton.addActionListener(// $$$
             new ActionListener()
@@ -125,7 +144,7 @@ public class ShowColors2JFrame extends JFrame{
                 public void actionPerformed(ActionEvent e)
                 {
                     try{
-                        color = JColorChooser.showDialog(ShowColors2JFrame.this, "Pick a color", color);
+                        color = JColorChooser.showDialog(ENvy.this, "Pick a color", color);
                         if( color == null ) color = Color.LIGHT_GRAY;
                         textarea.setBackground( color );
                         //String opt = "backgroundColour";
@@ -134,8 +153,7 @@ public class ShowColors2JFrame extends JFrame{
                         System.err.println(exc.getMessage());
                     }
                 }
-            }
-        );// $$$
+        });// $$$
         lista_culori.addItemListener(// +++
             new ItemListener()
             {
@@ -147,29 +165,34 @@ public class ShowColors2JFrame extends JFrame{
                         System.err.println(exc.getMessage());
                     }
                 }
-            }
-        );//+++
+        });//+++
         saveJButton.addActionListener(// |||
             new ActionListener()
             {
                 public void actionPerformed(ActionEvent e)
                 {
-                    File f = getFile();
-                    try{
-                        PrintWriter scriitor = new PrintWriter(f);
-                        scriitor.write(textarea.getText());
-                        scriitor.close();
-                    }catch(Exception exc){
+                	JFileChooser fileChooser = new JFileChooser();
+                	int option = fileChooser.showSaveDialog(getParent());
+                	try {
+                		File f = null;
+	                	if(option == JFileChooser.APPROVE_OPTION) f = fileChooser.getSelectedFile();
+	                    PrintWriter scriitor = new PrintWriter(f);
+	                    scriitor.write(textarea.getText());
+	                    scriitor.close();
+                	}catch(FileNotFoundException exc){
                         System.err.println( exc.getMessage() );
+                        ENvy.errorMessage("The file could not be found!");
+                    }catch(Exception exc) {
+                        System.err.println( exc.getMessage() );
+                        ENvy.errorMessage("The type of file could not be opened!");
                     }
                 }
                 //JFrame.EXIT_ON_CLOSE;
-            }
-        );// |||
-        filePickerJButton.addActionListener(
+        });// |||
+        filePickerJButton.addActionListener(/// @@@
             new ActionListener()
             {
-                synchronized public void actionPerformed(ActionEvent e)
+                public synchronized void actionPerformed(ActionEvent e)
                 {
                     File f = getFile();
                     try{
@@ -183,11 +206,12 @@ public class ShowColors2JFrame extends JFrame{
                         cititor.close();
                     }catch(Exception exc){
                         System.err.println( exc.getMessage() );
+                        ENvy.errorMessage("Eroare de citire!");
                     }
                 }
-            }
-        );
+        });/// @@@
         JFrame.setDefaultLookAndFeelDecorated(true);
+        
     }
 //explicit listeners-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     private class CheckBoxHandler implements ItemListener{//listener for the checkable font option buttons(italic and bold)
@@ -217,7 +241,7 @@ public class ShowColors2JFrame extends JFrame{
 
 //methods--------------------------------------------------------------------------------------------------------------------------------------------
     //the method for the file chooser of "save" which returns the file within the textarea's content is saved
-    private File getFile(){ // ~~~
+    private synchronized File getFile(){ // ~~~
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode( JFileChooser.FILES_ONLY );
         int result = fileChooser.showOpenDialog(this);
@@ -230,10 +254,18 @@ public class ShowColors2JFrame extends JFrame{
         }
         return fileName;
     }// ~~~
-    public static void databaseQuery(String optiune, boolean val) {
+    
+    private static void errorMessage(String error_message){
+    	JDialog dial = new JDialog();
+    	JLabel lab = new JLabel(error_message);
+    	dial.add(lab);
+    	dial.setSize(300, 150);
+    	dial.setVisible(true);
+    }
+    private void databaseQuery(String optiune, boolean val) {
     	try {
-    		Connection con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/envy_database", "root", "nick7777777");//Establishing connection
-    		String query = "INSERT INTO " + db_table+"(optiune) VALUES(\"" + optiune + "\")";
+    		Connection con = DriverManager.getConnection(db_connection, db_name, db_password);//Establishing connection
+    		String query = "INSERT INTO " + db_table+"(optiune) VALUES(\""+optiune+"\")";
     		PreparedStatement st = con.prepareStatement(query);
     		st.executeUpdate();
     		con.close();
